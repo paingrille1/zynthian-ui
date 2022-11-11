@@ -2158,7 +2158,12 @@ class zynthian_gui:
 			if zynthian_gui_config.show_cpu_status:
 				# Get CPU Load
 				#self.status_info['cpu_load'] = max(psutil.cpu_percent(None, True))
-				self.status_info['cpu_load'] = zynautoconnect.get_jackd_cpu_load()
+				#self.status_info['cpu_load'] = zynautoconnect.get_jackd_cpu_load()
+				try:
+					with open("/tmp/battery.json", 'r') as bt:
+						self.status_info["cpu_load"] = int(bt.read())
+				except:
+					self.status_info["cpu_load"] = 0
 			else:
 				# Get audio peak level
 				self.status_info['peakA'] = self.zynmixer.get_dpm(MIXER_MAIN_CHANNEL, 0)

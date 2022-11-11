@@ -444,7 +444,7 @@ class zynthian_gui_base(tkinter.Frame):
 			if self.meter_mode == self.METER_CPU:
 				# Display CPU-load bar
 				l = int(status['cpu_load'] * self.status_l / 100)
-				cr = int(status['cpu_load'] * 255 / 100)
+				cr = 255 - int(status['cpu_load'] * 255 / 100)
 				cg = 255 - cr
 				color = "#%02x%02x%02x" % (cr, cg, 0)
 				if self.status_cpubar:
