@@ -83,6 +83,7 @@ from zyngui.zynthian_gui_keybinding import zynthian_gui_keybinding
 from zyngui.zynthian_gui_main import zynthian_gui_main
 from zyngui.zynthian_audio_recorder import zynthian_audio_recorder
 from zyngui.zynthian_gui_midi_recorder import zynthian_gui_midi_recorder
+from zyngui.zynthian_gui_mma import zynthian_gui_mma
 from zyngui.zynthian_gui_zynpad import zynthian_gui_zynpad
 from zyngui.zynthian_gui_arranger import zynthian_gui_arranger
 from zyngui.zynthian_gui_patterneditor import zynthian_gui_patterneditor
@@ -382,6 +383,12 @@ class zynthian_gui:
 				self.wsleds.setPixelColor(10, self.wscolor_active)
 			else:
 				self.wsleds.setPixelColor(10, self.wscolor_light)
+			
+			# MIDI Recorder screen:
+			if self.current_screen=="mma":
+				self.wsleds.setPixelColor(10, self.wscolor_active)
+			else:
+				self.wsleds.setPixelColor(10, self.wscolor_light)
 
 			# Snapshot screen:
 			if self.current_screen=="snapshot":
@@ -633,6 +640,7 @@ class zynthian_gui:
 		# Create UI Apps Screens
 		self.screens['alsa_mixer'] = self.screens['control']
 		self.screens['midi_recorder'] = zynthian_gui_midi_recorder()
+		self.screens['mma'] = zynthian_gui_mma()
 		self.screens['zynpad'] = zynthian_gui_zynpad()
 		self.screens['arranger'] = zynthian_gui_arranger()
 		self.screens['pattern_editor'] = zynthian_gui_patterneditor()

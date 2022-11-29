@@ -55,6 +55,7 @@ class zynthian_gui_main(zynthian_gui_selector):
 		self.list_data.append((None,0,"> APPS"))
 		self.list_data.append((self.step_sequencer,0,"Sequencer"))
 		self.list_data.append((self.midi_recorder,0,"MIDI Recorder"))
+		self.list_data.append((self.mma,0,"MMA"))
 
 		# Add list of System / configuration views
 		self.list_data.append((None,0,"> SYSTEM"))
@@ -118,6 +119,10 @@ class zynthian_gui_main(zynthian_gui_selector):
 	def midi_recorder(self, t='S'):
 		logging.info("MIDI Recorder")
 		self.zyngui.show_screen_reset("midi_recorder")
+	
+	def mma(self, t='S'):
+		logging.info("MMA")
+		self.zyngui.show_screen_reset("mma")
 
 
 	def alsa_mixer(self, t='S'):
