@@ -35,6 +35,7 @@ from collections import OrderedDict
 import subprocess
 import tempfile
 from contextlib import suppress
+import os
 
 # Zynthian specific modules
 from zyngui import zynthian_gui_config
@@ -54,6 +55,8 @@ SELECT_BORDER	= zynthian_gui_config.color_on
 
 CHORD_NAMES   = [ "Db", "Eb", "Gb", "Ab", "Bb", "C", "D", "E", "F", "G", "A", "B"]
 CHORD_FLAV    = [ "M7", "m7", "7", "m", ""]
+GROOVES       = [ "blues128", "rhumba", "50srock", "60srock" ] 
+
 
 class chord:
     def __init__(self, chord):
@@ -97,6 +100,7 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		self.playing = False
 		self.played_bar = 0
 		self.current_jack_bar = 0
+		self.groove = 0
 		
 		self.smf_player = None # Pointer to SMF player
 		super().__init__()
@@ -128,7 +132,7 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		# Selection highlight
 		self.selection = self.grid_canvas.create_rectangle(0, 0, self.column_width, self.row_height, fill="", outline=SELECT_BORDER, width=self.select_thickness, tags="selection")
 
-		self.chord_grid = [ chord("Am"), chord("F"), chord("G"), chord("Am")]
+		self.chord_grid =  list()
 
 	# Function to show GUI
 	#   params: Misc parameters
@@ -149,7 +153,6 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		state, pos = self.jack_client.transport_query()
 		with suppress(KeyError):
 			current_jack_bar = pos['bar']
-		print(current_jack_bar)
 		if current_jack_bar != self.current_jack_bar:
 			self.current_jack_bar = current_jack_bar
 			if self.played_bar >= 0:
@@ -191,7 +194,6 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 	def update_selection_cursor(self):
 		row = int(self.selected_pad / self.columns)
 		col = self.selected_pad % self.columns
-		print("{} {}".format(col,row))
 		self.grid_canvas.coords(self.selection,
 			1 + col * self.column_width, 1 + row * self.row_height,
 			(1 + col) * self.column_width - self.select_thickness, (1 + row) * self.row_height - self.select_thickness)
@@ -239,23 +241,51 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 				self.zyngui.zynseq.nudge_tempo(dval)
 				self.set_title("Tempo: {:.1f}".format(self.zyngui.zynseq.get_tempo()), None, None, 2)
 		elif encoder == zynthian_gui_config.ENC_LAYER:
+				self.groove += dval
+				self.groove %= len(GROOVES)
+				self.set_title("Groove: {}".format(GROOVES[self.groove]), None, None, 2)
 				pass
 
 	def toggle_pad(self):
+		# check if need to allocate new bar
+		if self.selected_pad > len(self.chord_grid):
+			# too far away, abort
+			return True
+
+		if self.selected_pad == len(self.chord_grid):
+			new = "C"
+			try:
+				new = self.chord_grid[self.selected_pad - 1].getChord()
+			except:
+				pass
+			# allocate new chord, with data from previous bar
+			self.chord_grid.append(chord(new))
+			self.grid_canvas.itemconfig("lbl_pad:%d"%(self.selected_pad), text=self.chord_grid[self.selected_pad].getChord())
+                
+
 		self.edit_pad = not self.edit_pad
 		cell = self.grid_canvas.find_withtag("pad:%d"%(self.selected_pad))
 		if self.edit_pad:
 			self.grid_canvas.itemconfig(cell, fill="blue")
 		else:
 			self.grid_canvas.itemconfig(cell, fill="grey")
-	
+
+	def remove_bar(self):
+		# can only remove last bar
+		if self.selected_pad == len(self.chord_grid) - 1:
+			self.chord_grid.pop()
+			self.grid_canvas.itemconfig("lbl_pad:%d"%(self.selected_pad), text="")
+		return True
+
 	# Function to handle SELECT button press
 	#	type: Button press duration ["S"=Short, "B"=Bold, "L"=Long]
 	def switch_select(self, type='S'):
 		if super().switch_select(type):
 			return True
 		if type == 'S':
-			self.toggle_pad()
+			return self.toggle_pad()
+		if type == "B":
+			return self.remove_bar()
 
 
 	# Function to handle switch press
@@ -264,7 +294,6 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 	#	returns True if action fully handled or False if parent action should be triggered
 	def switch(self, switch, type):
 		self.zyngui.zynseq.disable_midi_learn()
-		print("{} {}".format(switch, type))
 		if switch == zynthian_gui_config.ENC_SNAPSHOT and type == 'B':
 			if not self.playing:
 				self.start_playing()
@@ -310,18 +339,15 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 			self.playing=False
 			cell = self.grid_canvas.find_withtag("pad:%d"%(self.played_bar))
 			self.grid_canvas.itemconfig(cell, fill="grey")
+			os.remove(self.current_midi)
 			sleep(0.1)
 
 	def start_playing(self, fpath=None):
 		self.stop_playing()
 		infile = tempfile.NamedTemporaryFile()
 		tempo = self.zyngui.zynseq.get_tempo()
-		infile.write("Drum Channel 10\n".encode())
-		infile.write("Bass Channel 16\n".encode())
-		infile.write("Walk Channel 15\n".encode())
-		infile.write("Chord Channel 13\n".encode())
 		infile.write("Tempo {}\n".format(tempo).encode())
-		infile.write("Groove rhumba\n".encode())
+		infile.write("Groove {}\n".format(GROOVES[self.groove]).encode())
 		barnum = 1
 		for bar in self.chord_grid:
 		    barstring = "{} {}\n".format(barnum, bar.getChord())
@@ -330,10 +356,11 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 
 		infile.flush()
 		fpath = "{}.mid".format(infile.name)
-		command = ["mma", "-f", fpath, infile.name]
+		command = ["mma", "-1", "-f", fpath, infile.name]
 		process = subprocess.run(command)
 
 		infile.close()
+		self.current_midi = fpath
 
 		try:
 			zynsmf.load(self.smf_player,fpath)
