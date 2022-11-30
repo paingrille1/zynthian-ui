@@ -116,6 +116,7 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		self.playing = False
 		self.played_bar = 0
 		self.current_jack_bar = 0
+		self.start_jack_bar = 0
 		self.groove = 0
 		self.grooves = groovelist()
 		
@@ -149,7 +150,8 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		# Selection highlight
 		self.selection = self.grid_canvas.create_rectangle(0, 0, self.column_width, self.row_height, fill="", outline=SELECT_BORDER, width=self.select_thickness, tags="selection")
 
-		self.chord_grid =  list()
+		#self.chord_grid =  list()
+		self.chord_grid = [ chord("Am"), chord("F"), chord("C"), chord("G7") ]
 
 	# Function to show GUI
 	#   params: Misc parameters
@@ -175,7 +177,7 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 			if self.played_bar >= 0:
 				cell = self.grid_canvas.find_withtag("pad:%d"%(self.played_bar))
 				self.grid_canvas.itemconfig(cell, fill="grey")
-			self.played_bar += 1
+			self.played_bar = current_jack_bar - self.start_jack_bar
 			self.played_bar %= len(self.chord_grid)
 			cell = self.grid_canvas.find_withtag("pad:%d"%(self.played_bar))
 			self.grid_canvas.itemconfig(cell, fill="green")
@@ -365,11 +367,14 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		tempo = self.zyngui.zynseq.get_tempo()
 		infile.write("Tempo {}\n".format(tempo).encode())
 		infile.write("Groove {}\n".format(self.grooves[self.groove]).encode())
+		infile.write("Time 4\n".encode())
+		infile.write("Repeat\n".encode())
 		barnum = 1
 		for bar in self.chord_grid:
 		    barstring = "{} {}\n".format(barnum, bar.getChord())
 		    barnum += 1
 		    infile.write(barstring.encode())
+		infile.write("RepeatEnd 10\n".encode())
 
 		infile.flush()
 		fpath = "{}.mid".format(infile.name)
@@ -391,8 +396,11 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 			self.zyngui.zynseq.libseq.setTransportToStartOfBar()
 			self.current_playback_fpath=fpath
 			state, pos = self.jack_client.transport_query()
+			with suppress(KeyError):
+				current_jack_bar = pos['bar']
+				self.start_jack_bar = current_jack_bar
 			self.playing = True
-			self.played_bar = -1
+			self.played_bar = 0
 			self.refresh_played_bar()
 		except Exception as e:
 			logging.error("ERROR STARTING MIDI PLAY: %s" % e)
