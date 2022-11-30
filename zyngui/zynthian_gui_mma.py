@@ -55,8 +55,8 @@ SELECT_BORDER	= zynthian_gui_config.color_on
 
 CHORD_NAMES   = [ "Db", "Eb", "Gb", "Ab", "Bb", "C", "D", "E", "F", "G", "A", "B"]
 CHORD_FLAV    = [ "M7", "m7", "7", "m", ""]
-GROOVES       = [ "blues128", "rhumba", "50srock", "60srock" ] 
-
+#GROOVES       = [ "blues128", "rhumba", "50srock", "60srock", "popballad1", "popbalad1plus" ] 
+MY_DATA_DIR   = "/zynthian/zynthian-my-data" # TODO : clarify
 
 class chord:
     def __init__(self, chord):
@@ -87,6 +87,22 @@ class chord:
         self.flavor += offset
         self.flavor %= len(CHORD_FLAV)
 
+class groovelist:
+	def __init__(self):
+		self.grooves = list()
+		self.file = os.path.join(MY_DATA_DIR, "presets/mma/grooves.lst")
+		print(self.file)
+		with open(self.file) as f:
+			for g in f.readlines():
+				self.grooves.append(g)
+		print (self.grooves)
+
+	def __getitem__(self, index):
+		return self.grooves[index]
+
+	def __len__(self):
+		return len(self.grooves)
+
 # Class implements mma
 class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 
@@ -101,6 +117,7 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		self.played_bar = 0
 		self.current_jack_bar = 0
 		self.groove = 0
+		self.grooves = groovelist()
 		
 		self.smf_player = None # Pointer to SMF player
 		super().__init__()
@@ -242,8 +259,8 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 				self.set_title("Tempo: {:.1f}".format(self.zyngui.zynseq.get_tempo()), None, None, 2)
 		elif encoder == zynthian_gui_config.ENC_LAYER:
 				self.groove += dval
-				self.groove %= len(GROOVES)
-				self.set_title("Groove: {}".format(GROOVES[self.groove]), None, None, 2)
+				self.groove %= len(self.grooves)
+				self.set_title("Groove: {}".format(self.grooves[self.groove]), None, None, 2)
 				pass
 
 	def toggle_pad(self):
@@ -347,7 +364,7 @@ class zynthian_gui_mma(zynthian_gui_base.zynthian_gui_base):
 		infile = tempfile.NamedTemporaryFile()
 		tempo = self.zyngui.zynseq.get_tempo()
 		infile.write("Tempo {}\n".format(tempo).encode())
-		infile.write("Groove {}\n".format(GROOVES[self.groove]).encode())
+		infile.write("Groove {}\n".format(self.grooves[self.groove]).encode())
 		barnum = 1
 		for bar in self.chord_grid:
 		    barstring = "{} {}\n".format(barnum, bar.getChord())
