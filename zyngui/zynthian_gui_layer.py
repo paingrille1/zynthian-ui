@@ -97,9 +97,9 @@ class zynthian_gui_layer(zynthian_gui_selector):
 		except:
 			self.index = 0
 			try:
-				self.zyngui.set_curlayer(self.root_layers[0])
+				self.zyngui.set_curlayer(self.root_layers[0], populate_screens=False)
 			except:
-				self.zyngui.set_curlayer(None)
+				self.zyngui.set_curlayer(None, populate_screens=False)
 
 
 	def select_action(self, i, t='S'):
@@ -1593,21 +1593,21 @@ class zynthian_gui_layer(zynthian_gui_selector):
 			l2r = False
 			if lss:
 				if zynthian_gui_config.midi_single_active_channel:
-					if restore_midi_chan is not None and lss['midi_chan'] == restore_midi_chan:
+					if lss['midi_chan'] == 256 or restore_midi_chan is not None and lss['midi_chan'] == restore_midi_chan:
 						l2r = True
-				else:
+				elif lss['engine_nick'] != "MX":
 					l2r = True
 			layer2restore.append(l2r)
 
 		# Restore layer state, step 1 => Restore Bank & Preset Status
-		for i, lss in enumerate(state['layers']):
+		for i, layer in enumerate(self.layers):
 			if layer2restore[i]:
-				self.layers[i].restore_state_1(lss)
+				layer.restore_state_1(state['layers'][i])
 
 		# Restore layer state, step 2 => Restore Controllers Status
-		for i, lss in enumerate(state['layers']):
+		for i, layer in enumerate(self.layers):
 			if layer2restore[i]:
-				self.layers[i].restore_state_2(lss)
+				layer.restore_state_2(state['layers'][i])
 
 		# Set Audio Capture
 		if 'audio_capture' in state:
