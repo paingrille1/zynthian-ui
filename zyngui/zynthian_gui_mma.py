@@ -90,12 +90,12 @@ class chord:
 class groovelist:
 	def __init__(self):
 		self.grooves = list()
-		self.file = os.path.join(MY_DATA_DIR, "presets/mma/grooves.lst")
+		self.file = os.path.join(MY_DATA_DIR, "mma/grooves.lst")
 		print(self.file)
 		with open(self.file) as f:
 			for g in f.readlines():
-				self.grooves.append(g)
-		print (self.grooves)
+				if not g.startswith("#"):
+					self.grooves.append(g)
 
 	def __getitem__(self, index):
 		return self.grooves[index]
