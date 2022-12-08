@@ -97,6 +97,8 @@ class zynthian_gui_preset(zynthian_gui_selector):
 				options["Rename"] = preset
 			if hasattr(self.zyngui.curlayer.engine, "delete_preset"):
 				options["Delete"] = preset
+			if hasattr(self.zyngui.curlayer.engine, "share_preset"):
+				options["Share"] = preset
 		self.zyngui.screens['option'].config("Preset: {}".format(preset_name), options, self.preset_options_cb)
 		self.zyngui.show_screen('option')
 
@@ -112,6 +114,8 @@ class zynthian_gui_preset(zynthian_gui_selector):
 			self.zyngui.show_keyboard(self.rename_preset, preset[2])
 		elif option == "Delete":
 			self.delete_preset(preset)
+		elif option == "Share":
+			self.share_preset(preset)
 
 
 	def rename_preset(self, new_name):
@@ -126,6 +130,11 @@ class zynthian_gui_preset(zynthian_gui_selector):
 			except Exception as e:
 				logging.error("Failed to rename preset => {}".format(e))
 
+	def share_preset(self, preset):
+		try:
+			self.zyngui.curlayer.engine.share_preset(self.zyngui.curlayer.bank_info, preset)
+		except Exception as e:
+			logging.error("Failed to share preset => {}".format(e))
 
 	def delete_preset(self, preset):
 		self.zyngui.show_confirm("Do you really want to delete '{}'?".format(preset[2]), self.delete_preset_confirmed, preset)

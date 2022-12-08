@@ -28,6 +28,8 @@ import logging
 from glob import glob
 from . import zynthian_engine
 from zynlibs.zynaudioplayer import zynaudioplayer
+import nextcloud_client
+import subprocess
 
 #------------------------------------------------------------------------------
 # Audio Player Engine Class
@@ -258,6 +260,14 @@ class zynthian_engine_audioplayer(zynthian_engine):
 			os.remove(preset[0])
 			os.remove("{}.png".format(preset[0]))
 		except Exception as e:
+			logging.debug(e)
+
+	def share_preset(self, bank, preset):
+		try:
+			print("share preset {}".format(preset[0]))
+			os.system("/root/aa.py {}".format(preset[0]))
+		except Exception as e:
+			print(e)
 			logging.debug(e)
 
 
