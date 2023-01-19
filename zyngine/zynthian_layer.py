@@ -78,6 +78,7 @@ class zynthian_layer:
 		self.bank_info = None
 		self.bank_msb = 0
 		self.bank_msb_info = [[0,0], [0,0], [0,0]] # system, user, external => [offset, n]
+		self.auto_save_bank = False # True to skip bank selection when saving preset
 
 		self.show_fav_presets = False
 		self.preset_list = []
@@ -159,6 +160,8 @@ class zynthian_layer:
 		i = 0
 		self.bank_msb_info = [[0,0], [0,0], [0,0]] # system, user, external => [offset, n]
 		for bank in self.bank_list:
+			if bank[0] is None:
+				continue
 			if bank[0].startswith(self.ex_data_dir):
 				self.bank_msb_info[0][0] += 1
 				self.bank_msb_info[1][0] += 1
@@ -602,7 +605,10 @@ class zynthian_layer:
 
 		#  and set preset
 		try:
-			self.preset_loaded = self.set_preset_by_name(state['preset_name'], True, False)
+			if(state['preset_info']):
+				self.preset_loaded = self.set_preset_by_id(state['preset_info'][0], True, False)
+			else:
+				self.preset_loaded = self.set_preset_by_name(state['preset_name'], True, False)
 			self.wait_stop_loading()
 		except Exception as e:
 			logging.warning("Invalid Preset on layer {}: {}".format(self.get_basepath(), e))
@@ -927,7 +933,7 @@ class zynthian_layer:
 
 		subpath = None
 		bank_name = self.get_preset_bank_name()
-		if bank_name and bank_name!="None":
+		if bank_name and bank_name != "None" and not path.endswith(bank_name):
 			subpath = bank_name
 			if self.preset_name:
 				subpath += "/" + self.preset_name

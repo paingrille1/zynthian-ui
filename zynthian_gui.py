@@ -1522,6 +1522,20 @@ class zynthian_gui:
 			except Exception as e:
 				logging.error(e)
 
+		#----------------------------------------------------------------
+		# MIDI CUIAs
+		#----------------------------------------------------------------
+
+		elif cuia == "PROGRAM_CHANGE":
+			if len(params):
+				pgm = int(params[0])
+				if len(params) > 1:
+					chan = int(params[1])
+				else:
+					chan = lib_zyncore.get_midi_active_chan()
+				if chan >= 0 and chan < 16 and pgm >= 0 and pgm < 128:
+					lib_zyncore.write_zynmidi_program_change(chan, pgm)
+
 		# Common methods to control views derived from zynthian_gui_base
 		elif isinstance(self.screens[self.current_screen], zynthian_gui_base):
 			if cuia == "SHOW_TOPBAR":
@@ -2131,9 +2145,6 @@ class zynthian_gui:
 			self.zynmidi_read()
 			self.osc_receive()
 
-			# Run autoconnect if pending
-			self.zynautoconnect_do()
-
 			# Every 4 cycles ...
 			if j > 4:
 				j = 0
@@ -2297,7 +2308,7 @@ class zynthian_gui:
 				self.status_info['midi_recorder'] = self.screens['midi_recorder'].get_status()
 			except Exception as e:
 				logging.error(e)
-			
+
 			# Remove Player
 			if self.audio_player and self.audio_player.engine and not self.audio_player.engine.player.get_playback_state(16):
 					self.audio_player.engine.del_layer(self.audio_player)

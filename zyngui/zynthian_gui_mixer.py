@@ -432,16 +432,17 @@ class zynthian_gui_mixer_strip():
 				else:
 					strip_txt = "X"
 				self.parent.main_canvas.itemconfig(self.legend_strip_txt, text=strip_txt)
-				label = self.get_legend_text()
-				self.parent.main_canvas.itemconfig(self.legend, text=label, state=tkinter.NORMAL)
-				bounds = self.parent.main_canvas.bbox(self.legend)
-				if bounds[1] < self.fader_text_limit:
-					while bounds and bounds[1] < self.fader_text_limit:
-						label = label[:-1]
-						self.parent.main_canvas.itemconfig(self.legend, text=label)
+				label_parts = self.get_legend_text().split("\n")
+				for i, label in enumerate(label_parts):
+						self.parent.main_canvas.itemconfig(self.legend, text=label, state=tkinter.NORMAL)
 						bounds = self.parent.main_canvas.bbox(self.legend)
-					label += "..."
-					self.parent.main_canvas.itemconfig(self.legend, text=label)
+						if bounds[1] < self.fader_text_limit:
+								while bounds and bounds[1] < self.fader_text_limit:
+										label = label[:-1]
+										self.parent.main_canvas.itemconfig(self.legend, text=label)
+										bounds = self.parent.main_canvas.bbox(self.legend)
+								label_parts[i] = label + "..."
+				self.parent.main_canvas.itemconfig(self.legend, text="\n".join(label_parts))
 
 		try:
 			if self.layer.engine and self.layer.engine.type == "MIDI Tool" or self.layer.midi_chan is None:
@@ -772,7 +773,7 @@ class zynthian_gui_mixer(zynthian_gui_base.zynthian_gui_base):
 		visible_chains = zynthian_gui_config.visible_mixer_strips # Maximum quantity of mixer strips to display (Defines strip width. Main always displayed.)
 		if visible_chains < 1:
 			# Automatic sizing if not defined in config
-			if self.width <= 400: visible_chains = 4
+			if self.width <= 400: visible_chains = 6
 			elif self.width <= 600: visible_chains = 8
 			elif self.width <= 800: visible_chains = 10
 			elif self.width <= 1024: visible_chains = 12
