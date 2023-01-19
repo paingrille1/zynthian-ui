@@ -31,6 +31,8 @@ from zynlibs.zynaudioplayer import zynaudioplayer
 import nextcloud_client
 import subprocess
 
+public_link = 'https://cloud.paingrille.fr/index.php/s/bGjz7KBHpApKjSJ'
+
 #------------------------------------------------------------------------------
 # Audio Player Engine Class
 #------------------------------------------------------------------------------
@@ -265,7 +267,11 @@ class zynthian_engine_audioplayer(zynthian_engine):
 	def share_preset(self, bank, preset):
 		try:
 			print("share preset {}".format(preset[0]))
-			os.system("/root/aa.py {}".format(preset[0]))
+			file_name = preset[0] 
+			destination = '/' + os.path.basename(file_name)
+			nc = nextcloud_client.Client.from_public_link(public_link)
+			nc.put_file(destination, file_name, chunked=False)
+			logging.info("shared : {}".format(filename))
 		except Exception as e:
 			print(e)
 			logging.debug(e)
