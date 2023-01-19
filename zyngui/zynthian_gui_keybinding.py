@@ -163,7 +163,6 @@ class zynthian_gui_keybinding:
 			keysym = keysym.lower()
 			rkey = "{}^{}".format(modifier, keysym)
 			return self.rmap[rkey]
-
 		except:
 			if rkey == '0^down': return('ARROW_DOWN')
 			elif rkey == '0^up': return('ARROW_UP')
@@ -172,6 +171,15 @@ class zynthian_gui_keybinding:
 			elif rkey == '0^return': return('SWITCH_SELECT')
 			elif rkey == '1^return': return(['SWITCH_SELECT', 'B'])
 			elif rkey == '0^escape': return('BACK')
+			else:
+				#Default 0..9: send program change
+				try:
+					if keysym.startswith("kp_"):
+						keysym = keysym[3:]
+					val = int(keysym)
+					return(["PROGRAM_CHANGE", val])
+				except:
+					pass
 			logging.debug("Key not configured")
 
 
@@ -184,6 +192,9 @@ class zynthian_gui_keybinding:
 		self.rmap = {}
 		for action, m in self.config['map'].items():
 			keysyms = m['keysym'].lower().split(',')
+			parts = action.split(' ')
+			if len(parts)>1:
+				action = parts
 			for ks in keysyms:
 				rkey = "{}^{}".format(m['modifier'], ks.strip())
 				self.rmap[rkey] = action
